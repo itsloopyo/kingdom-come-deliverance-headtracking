@@ -1,0 +1,24 @@
+{
+  "schema_version": 2,
+  "mod_info": {
+    "name": "KingdomComeDeliveranceHeadTracking",
+    "version": "0.0.0",
+    "game_id": "kingdom-come-deliverance"
+  },
+  "strategy": "AsiLoader",
+  "delivery_mode": "manifest",
+
+  "files": [
+    {
+      "source": "vendor/ultimate-asi-loader/dinput8.dll",
+      "target": "Bin/Win64/dinput8.dll"
+    },
+    {
+      "source": "plugins/KingdomComeDeliveranceHeadTracking.asi",
+      "target": "Bin/Win64/KingdomComeDeliveranceHeadTracking.asi"
+    }
+  ],
+
+  "runtime_requirements": [],
+  "dependencies": []
+}

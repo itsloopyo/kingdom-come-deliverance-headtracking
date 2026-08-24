@@ -1,0 +1,51 @@
+# Project-local tooling and agent scaffolding (per AGENTS.md)
+.claude/
+.lab/
+.millhouse/
+.skills/
+skills/
+AGENTS.md
+CLAUDE.md
+NEXUS_MODS.md
+mcp.json
+.mcp.json
+
+# Build / tooling output
+.pixi/
+.vs/
+.vscode/
+.idea/
+build/
+bin/
+obj/
+out/
+x64/
+libs/
+dist/
+release/
+.headtracking-state.json
+*.user
+*.suo
+*.aps
+*.ilk
+*.pdb
+*.asi
+
+# CMake in-source artifacts
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+
+# Reverse engineering scratch: Ghidra projects, decompiler exports, memory
+# dumps, traces, screenshots. Kept on disk, never committed.
+scratch/
+.scratch/
+*.gpr
+*.rep/
+*.gpr.lock
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
