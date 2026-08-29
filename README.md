@@ -1,10 +1,10 @@
 # Kingdom Come: Deliverance Head Tracking
 
-![Head tracking running in Kingdom Come: Deliverance](https://raw.githubusercontent.com/itsloopyo/kingdom-come-deliverance-headtracking/main/assets/readme-clip.gif)
+![Kingdom Come: Deliverance running with this mod](https://raw.githubusercontent.com/itsloopyo/kingdom-come-deliverance-headtracking/main/assets/readme-clip.gif)
 
 *Gameplay footage from Kingdom Come: Deliverance, captured with this mod running. The game, its assets and all footage of it are copyright [Warhorse Studios](https://warhorsestudios.cz/); the clip is reproduced here solely to demonstrate what the mod does. This mod is not affiliated with, endorsed by, or supported by Warhorse Studios.*
 
-Move the in-game view with your real head while the mouse keeps aiming, with no VR headset needed.
+An unofficial head tracking mod for Kingdom Come: Deliverance that moves the view with your head while your mouse or controller keeps aiming, driven by a webcam, phone, or any OpenTrack compatible tracker, with no VR headset required.
 
 > **Status: pre-release.** This has not been comprehensively tested and may contain
 > game breaking bugs
