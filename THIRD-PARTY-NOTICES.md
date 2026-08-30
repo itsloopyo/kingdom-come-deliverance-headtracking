@@ -17,7 +17,7 @@ Kingdom Come: Deliverance.
 |-----------|---------|---------|--------------|
 | Ultimate ASI Loader | v9.7.2 | MIT | Bundled verbatim in the installer ZIP |
 | MinHook | v1.3.3 | BSD-2-Clause | Statically linked into `KingdomComeDeliveranceHeadTracking.asi` |
-| cameraunlock-core | 371b136584d90163755f0df43e55ed6612952486 | MIT | Statically linked into `KingdomComeDeliveranceHeadTracking.asi` |
+| cameraunlock-core | 0f7a63455ddeb91677c9268e88fd35833aa77359 | MIT | Statically linked into `KingdomComeDeliveranceHeadTracking.asi` |
 | OpenTrack | n/a | ISC | Not bundled; UDP protocol interoperability only |
 
 ---
@@ -174,7 +174,7 @@ Git submodule at `cameraunlock-core/`, statically linked into
 `KingdomComeDeliveranceHeadTracking.asi`. Our own code,
 MIT licensed, reproduced here so the notices are complete.
 
-- **Version:** commit `371b136584d90163755f0df43e55ed6612952486`
+- **Version:** commit `0f7a63455ddeb91677c9268e88fd35833aa77359`
 - **License:** MIT
 - **Upstream:** https://github.com/itsloopyo/cameraunlock-core
 - **Usage:** Shared pose pipeline: OpenTrack receiver, sample-rate
