@@ -90,6 +90,39 @@ namespace
               "the hotkeys are read as hex");
     }
 
+    // An INI predating the LimitYDown key still has to give symmetric vertical travel.
+    // Falling back to the struct default instead left a player who set LimitY=0.40 with
+    // 0.40 m up and 0.20 m down, and nothing in the log said so.
+    void MirroredVerticalLimitTests(int& failures)
+    {
+        const std::string wide = MakeTempDir();
+        WriteIni(wide, "[Position]\nLimitX=0.30\nLimitY=0.40\nLimitZ=0.40\nLimitZBack=0.10\n");
+
+        kcd_ht::Config raised;
+        kcd_ht::LoadConfig(wide, raised);
+        Check(failures, NearEqual(raised.limit_y, 0.40f)
+                     && NearEqual(raised.limit_y_down, 0.40f),
+              "LimitY=0.40 without LimitYDown gives 0.40 m each way, not 0.20 m down");
+
+        const std::string tight = MakeTempDir();
+        WriteIni(tight, "[Position]\nLimitY=0.05\n");
+
+        kcd_ht::Config lowered;
+        kcd_ht::LoadConfig(tight, lowered);
+        Check(failures, NearEqual(lowered.limit_y, 0.05f)
+                     && NearEqual(lowered.limit_y_down, 0.05f),
+              "LimitY=0.05 without LimitYDown gives 0.05 m of travel each way");
+
+        const std::string both = MakeTempDir();
+        WriteIni(both, "[Position]\nLimitY=0.40\nLimitYDown=0.05\n");
+
+        kcd_ht::Config asymmetric;
+        kcd_ht::LoadConfig(both, asymmetric);
+        Check(failures, NearEqual(asymmetric.limit_y, 0.40f)
+                     && NearEqual(asymmetric.limit_y_down, 0.05f),
+              "an explicit LimitYDown still overrides the mirrored value");
+    }
+
     void ValidationTests(int& failures)
     {
         const std::string dir = MakeTempDir();
@@ -189,6 +222,7 @@ int RunConfigTests()
 
     MissingFileTests(failures);
     ParsingTests(failures);
+    MirroredVerticalLimitTests(failures);
     ValidationTests(failures);
     HotkeyValidationTests(failures);
     HotkeyBindableRangeTests(failures);

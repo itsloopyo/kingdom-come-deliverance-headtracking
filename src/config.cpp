@@ -187,7 +187,10 @@ namespace kcd_ht
         out.position_enabled = reader.ReadBool(kPosition, "Enabled", out.position_enabled);
         out.limit_x = ReadPositionLimit(reader, "LimitX", out.limit_x);
         out.limit_y = ReadPositionLimit(reader, "LimitY", out.limit_y);
-        out.limit_y_down = ReadPositionLimit(reader, "LimitYDown", out.limit_y_down);
+        // Falls back to whatever LimitY resolved to, not to the struct default: a config
+        // that sets only LimitY would otherwise keep 0.20 m of downward travel while the
+        // upward budget moved, and nothing in the log would say the key was half-effective.
+        out.limit_y_down = ReadPositionLimit(reader, "LimitYDown", out.limit_y);
         out.limit_z = ReadPositionLimit(reader, "LimitZ", out.limit_z);
         out.limit_z_back = ReadPositionLimit(reader, "LimitZBack", out.limit_z_back);
 
