@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
+#include <string>
 #include <windows.h>
 
 #include <cameraunlock/config/ini_reader.h>
@@ -109,7 +111,17 @@ namespace kcd_ht
         // GetPrivateProfileStringA, which does not treat ';' as an inline comment
         // introducer, so "Enabled=true ; note" matches no known bool spelling and
         // silently falls back to the default.
-        constexpr char kDefaultIni[] =
+        //
+        // LimitYDown is formatted from cameraunlock::PositionSettings{}.limit_y_down
+        // rather than written as a literal, so a change to core's default cannot
+        // silently disagree with the file this mod ships.
+        std::string BuildDefaultIni()
+        {
+            char limitYDown[16] = {};
+            std::snprintf(limitYDown, sizeof(limitYDown), "%.2f",
+                          static_cast<double>(cameraunlock::PositionSettings{}.limit_y_down));
+
+            std::string ini(
             "[HeadTracking]\r\n"
             "UdpPort=4242\r\n"
             "; Start with head tracking already on.\r\n"
@@ -139,7 +151,10 @@ namespace kcd_ht
             "Enabled=true\r\n"
             "LimitX=0.30\r\n"
             "LimitY=0.20\r\n"
-            "LimitYDown=0.20\r\n"
+            "LimitYDown=");
+            ini += limitYDown;
+            ini +=
+            "\r\n"
             "LimitZ=0.40\r\n"
             "LimitZBack=0.10\r\n"
             "\r\n"
@@ -148,6 +163,8 @@ namespace kcd_ht
             "ToggleKey=0x23\r\n"
             "PositionKey=0x21\r\n"
             "YawModeKey=0x22\r\n";
+            return ini;
+        }
     }
 
     void LoadConfig(const std::string& exeDir, Config& out)
@@ -212,9 +229,10 @@ namespace kcd_ht
                       kIniName, GetLastError());
             return;
         }
-        constexpr DWORD kLength = static_cast<DWORD>(sizeof(kDefaultIni) - 1);
+        const std::string defaultIni = BuildDefaultIni();
+        const DWORD kLength = static_cast<DWORD>(defaultIni.size());
         DWORD written = 0;
-        const BOOL wrote = WriteFile(file, kDefaultIni, kLength, &written, nullptr);
+        const BOOL wrote = WriteFile(file, defaultIni.data(), kLength, &written, nullptr);
         const DWORD error = GetLastError();
         CloseHandle(file);
 
