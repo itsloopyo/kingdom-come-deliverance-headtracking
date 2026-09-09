@@ -13,10 +13,11 @@ An unofficial head tracking mod for Kingdom Come: Deliverance that moves the vie
 
 - **Decoupled look and aim** - your head moves the picture; aim, raycasts and combat stay on your mouse
 - **6DOF positional tracking** - lean and peek with head position, limited so you never clip through Henry
+- **Works with any OpenTrack compatible tracker** - free options available for PC, iOS and Android
 
 ## Requirements
 
-- [Kingdom Come: Deliverance on Steam](https://store.steampowered.com/app/379430/). Other stores are untested; the mod stays dormant rather than misbehave if the build is not recognized.
+- [Kingdom Come: Deliverance on Steam](https://store.steampowered.com/app/379430/), or the Xbox Game Pass / Microsoft Store version. Each store ships its own build of the game and the mod carries a profile for each; on a build it does not recognize it stays dormant rather than misbehave.
 - A head tracker: a webcam through [OpenTrack](https://github.com/opentrack/opentrack)'s `neuralnet` tracker, TrackIR, Tobii, a VR headset, or a phone app that speaks the OpenTrack UDP protocol.
 - 64-bit Windows 10 or 11.
 
@@ -24,7 +25,7 @@ An unofficial head tracking mod for Kingdom Come: Deliverance that moves the vie
 
 1. Download the installer ZIP from the [Releases page](https://github.com/itsloopyo/kingdom-come-deliverance-headtracking/releases).
 2. Extract it anywhere.
-3. Double-click `install.cmd`. It finds the game, drops the ASI loader and the mod into `Bin\Win64`, and records what it installed so `uninstall.cmd` can put the game back exactly as it found it.
+3. Double-click `install.cmd`. It finds the game, drops the ASI loader and the mod in beside `KingdomCome.exe`, and records what it installed so `uninstall.cmd` can put the game back exactly as it found it.
 4. Configure OpenTrack to output UDP to `127.0.0.1:4242` (see below).
 5. Launch the game.
 
@@ -43,17 +44,31 @@ or set the environment variable the installer reads:
 $env:KINGDOM_COME_DELIVERANCE_PATH = "D:\Games\KingdomComeDeliverance"
 ```
 
-Give it the folder that contains `Bin\Win64\KingdomCome.exe`, not `Bin\Win64`
-itself.
+Give it the game's own top folder, not the folder the executable is in. On Steam
+and GOG that is the folder containing `Bin\Win64\KingdomCome.exe`; on Game Pass
+it is the `Content` folder, which holds `KingdomCome.exe` directly.
 
 ### Manual Installation
 
-Copy two files into `<game>\Bin\Win64` (the folder holding `KingdomCome.exe`):
+Copy two files in beside `KingdomCome.exe`:
 
 ```
-Bin\Win64\dinput8.dll                                 (from vendor\ultimate-asi-loader\)
-Bin\Win64\KingdomComeDeliveranceHeadTracking.asi      (from plugins\)
+dinput8.dll                                 (from vendor\ultimate-asi-loader\)
+KingdomComeDeliveranceHeadTracking.asi      (from plugins\)
 ```
+
+The two stores put `KingdomCome.exe` in different places, and the loader only
+looks in the folder the executable is in, so this is the one detail worth
+checking before you copy:
+
+| Store | Where the two files go |
+|-------|------------------------|
+| Steam, GOG | `<game>\Bin\Win64\` |
+| Xbox Game Pass / Microsoft Store | `<XboxGames>\Kingdom Come- Deliverance\Content\` |
+
+The installer ZIP mirrors the Steam layout, so its files sit under `Bin\Win64\`
+inside the archive. For a Game Pass install, take them out of that folder and
+drop them straight into `Content`.
 
 `dinput8.dll` is Ultimate ASI Loader. `WHGame.dll` imports DirectInput 8
 directly and the game folder is searched before System32, so the loader picks
@@ -143,8 +158,8 @@ Two equivalent binding sets - use whichever your keyboard has:
 
 ## Configuration
 
-`HeadTracking.ini` is written next to `KingdomCome.exe` (in `<game>\Bin\Win64`)
-on first launch.
+`HeadTracking.ini` is written next to `KingdomCome.exe` on first launch, in the
+same folder you copied the `.asi` into.
 
 ```ini
 [HeadTracking]
@@ -201,10 +216,14 @@ Everything the mod does is written to `HeadTracking.log` next to
 **Mod not loading**
 
 - No log file at all means the ASI loader is not loading. Confirm `dinput8.dll`
-  and the `.asi` are both in `Bin\Win64`.
+  and the `.asi` are both in the folder `KingdomCome.exe` is in - `Bin\Win64` on
+  Steam and GOG, `Content` on Game Pass. Neither belongs in the game's top
+  folder.
 - A log line saying *staying dormant* means the mod did not recognize your
   `WHGame.dll`. The line says whether the game is newer or older than the builds
-  it knows about; open an issue with it.
+  it knows about; open an issue with it. The line above it names the profile
+  that did match on a working install, `steam-win64-...` or `gdk-win64-...`
+  according to where you bought the game.
 
 **No tracking response**
 

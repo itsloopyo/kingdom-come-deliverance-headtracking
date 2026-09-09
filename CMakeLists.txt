@@ -58,6 +58,7 @@ set(MOD_TESTABLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pose_channel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/view_injection.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/builds/steam_offsets.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/builds/gdk_offsets.cpp
 )
 
 set(MOD_RUNTIME_SOURCES

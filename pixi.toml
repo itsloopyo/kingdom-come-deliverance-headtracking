@@ -25,10 +25,14 @@ build-debug = { cmd = "cmake --build build --config Debug", depends-on = ["setup
 # without a game process. Same build the DLL comes out of, so CI runs it too.
 test = { cmd = "ctest --test-dir build -C Release --output-on-failure", depends-on = ["build"] }
 
-# Print the PE fingerprint of the installed game binaries. Every camera address
-# this mod uses is a WHGame.dll RVA, so a fingerprint change IS a break: the mod
-# stays dormant until a profile for the new build is added. First thing to run
-# when the log says it did not recognise the game.
+# Print the PE fingerprint of every installed copy of the game. Every camera
+# address this mod uses is a WHGame.dll RVA, so a fingerprint change IS a break:
+# the mod stays dormant until a profile for the new build is added. First thing
+# to run when the log says it did not recognise the game.
+#
+# Steam, GOG and Game Pass ship separate links of the same game version, each
+# needing its own profile, so this checks all of them rather than the first one
+# detection returns.
 check-fingerprint = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/check-fingerprint.ps1" }
 
 # Refresh the vendored loader from upstream. A deliberate developer action with a
@@ -46,13 +50,17 @@ clean-all = { cmd = """
 # Package release ZIPs (installer + nexus).
 package = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/package-release.ps1", depends-on = ["build"] }
 
-# Build + deploy to the detected game directory (dev loop).
+# Build + deploy to every installed copy of the game (dev loop). Steam, GOG and
+# Game Pass each get the ASI and the loader, in the directory their own
+# executable lives in - Bin\Win64 for the first two, the package Content folder
+# for Game Pass.
 install = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1", depends-on = ["build"] }
 
-# Remove the mod from the game directory. /y is mandatory: `pixi run` gives the
-# child no TTY, so uninstall.cmd's trailing `pause` throws "IOException: The
-# handle is invalid" and kills the task without it.
-uninstall = "scripts\\uninstall.cmd /y"
+# Remove the mod from every install deploy wrote to. The wrapper calls
+# uninstall.cmd once per install, always with /y: `pixi run` gives the child no
+# TTY, so uninstall.cmd's trailing `pause` throws "IOException: The handle is
+# invalid" and kills the task without it.
+uninstall = "powershell -ExecutionPolicy Bypass -File scripts/uninstall-all.ps1"
 
 # Automated release workflow (version bump, changelog, build, tag, push).
 # Fully unattended: pixi run release <major|minor|patch|nightly|X.Y.Z>

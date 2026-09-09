@@ -5,6 +5,11 @@ name: Patch watch
 # issue when it changes, so a fixed release can be prepared before users hit
 # the problem.
 #
+# It watches Steam only. The Microsoft Store ships its own build of the game
+# and publishes no equivalent anonymous feed, so a Game Pass patch arrives
+# unannounced - `pixi run check-fingerprint` covers every install on the
+# machine and is what tells you.
+#
 # This is a heads-up channel, never the safety mechanism. The safety mechanism
 # is the in-process PE fingerprint check, which leaves the mod dormant on an
 # unrecognised build whether or not this workflow ever runs.
@@ -118,10 +123,14 @@ jobs:
                 '',
                 '1. Update the game, then run `pixi run check-fingerprint`.',
                 '2. If the printed fingerprints already match a profile in',
-                '   `src/builds/steam_offsets.cpp`, the executable did not change. Close this issue.',
-                '3. Otherwise rederive `kCViewUpdateRva` and `kCCameraUpdateFrustumRva` and ADD',
-                '   a new profile to the TOP of `kKnownProfiles`. Never edit an existing',
-                '   profile - users who have not taken the patch still match it.',
-                '4. Note the addition in the CHANGELOG as an addition, not a fix.',
+                '   `src/builds/*_offsets.cpp`, the executable did not change. Close this issue.',
+                '3. Otherwise rederive the RVAs and ADD a new profile to the store's own',
+                '   file - `steam_offsets.cpp` here - and put it at the TOP of',
+                '   `kKnownProfiles`. Never edit an existing profile: users who have not',
+                '   taken the patch still match it.',
+                '4. The Game Pass build patches on its own schedule and is not watched by',
+                '   this workflow. `pixi run check-fingerprint` reports every install on the',
+                '   machine, so run it against both if you have both.',
+                '5. Note the addition in the CHANGELOG as an addition, not a fix.',
               ].join('\n'),
             });

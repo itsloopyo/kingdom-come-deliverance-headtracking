@@ -6,7 +6,9 @@ namespace kcd_ht::builds
 {
     // Append-only. A game patch adds a profile; it never edits one, so a player
     // who has held back on an older build keeps matching their own entry when
-    // they install a newer mod release.
+    // they install a newer mod release. One file per store, every build of that
+    // store inside it.
+    extern const BuildProfile kGdkProfile_20260401;
     extern const BuildProfile kSteamProfile_20260401;
 
     // Newest first. The head entry is the diagnostic primary: when nothing
