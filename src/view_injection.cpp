@@ -110,10 +110,20 @@ namespace kcd_ht
     {
         const Matrix33f base = RotationOf(view);
 
-        // The protocol's yaw and roll run opposite to CryEngine's camera-local
-        // +Z and +Y rotations. Converted once, here at the engine boundary, the
-        // same way the position z is - never with a user-facing inversion.
-        const float yaw = -pose.yaw;
+        // Roll runs opposite to CryEngine's camera-local +Y rotation, and is
+        // converted here at the engine boundary - never with a user-facing
+        // inversion setting.
+        //
+        // Yaw is NOT negated. It was, and that was wrong: measured in game, a
+        // head turned left swung the view right and dragged the crosshair left
+        // with it. The crosshair is projected from the two camera matrices
+        // rather than from the pose, so it faithfully followed the mirrored
+        // camera - which is why this reads as a reticle fault and is not one.
+        // The August note recording yaw as needing negation was taken on a
+        // different tracker; the protocol carries no statement of its own
+        // positive directions, so this is settled by looking at the game and
+        // not by deriving it from the engine's handedness.
+        const float yaw = pose.yaw;
         const float roll = -pose.roll;
 
         Matrix33f rotated;
