@@ -23,6 +23,9 @@ namespace kcd_ht::diagnostics
         const cameraunlock::UdpReceiver* g_receiver = nullptr;
         const Session* g_session = nullptr;
 
+        std::atomic<std::uint64_t> g_posesPublished{0};
+        std::atomic<std::uint64_t> g_passesTracked{0};
+        std::atomic<std::uint64_t> g_passesUntracked{0};
         std::atomic<std::uint64_t> g_viewUpdates{0};
 
         // The two frustum fields the reticle projection needs, captured off the
@@ -66,7 +69,8 @@ namespace kcd_ht::diagnostics
             // question being asked.
             Log::Line("heartbeat viewUpdates=%llu enabled=%s udp=%s udpData=%s raw=(Y=%.2f P=%.2f R=%.2f) "
                       "rawPos=(%.3f %.3f %.3f) pos=%s yawMode=%s smoothing=%s gameplay=%s "
-                      "vFov=%.1fdeg ratio=%.3f hud=%.0fx%.0f",
+                      "vFov=%.1fdeg ratio=%.3f hud=%.0fx%.0f "
+                      "posesPublished=%llu passesTracked=%llu passesClean=%llu",
                       static_cast<unsigned long long>(updates),
                       Runtime().trackingEnabled.load() ? "ON" : "OFF",
                       UdpPortState(),
@@ -79,7 +83,10 @@ namespace kcd_ht::diagnostics
                       InActiveGameplay() ? "YES" : "NO",
                       static_cast<double>(g_fovRadians.load() * kRadToDeg),
                       static_cast<double>(g_projectionRatio.load()),
-                      static_cast<double>(hudW), static_cast<double>(hudH));
+                      static_cast<double>(hudW), static_cast<double>(hudH),
+                      static_cast<unsigned long long>(g_posesPublished.load(std::memory_order_relaxed)),
+                      static_cast<unsigned long long>(g_passesTracked.load(std::memory_order_relaxed)),
+                      static_cast<unsigned long long>(g_passesUntracked.load(std::memory_order_relaxed)));
         }
 
         // Said once. The reticle projection reads column 0 as RIGHT, and it can
@@ -292,6 +299,12 @@ namespace kcd_ht::diagnostics
         if (HANDLE arming = CreateThread(nullptr, 0, &watch::ArmEveryThread, nullptr, 0, nullptr))
             CloseHandle(arming);
     }
+
+    float ViewFieldOfViewRadians() { return g_fovRadians.load(std::memory_order_relaxed); }
+
+    void NotePosePublished() { g_posesPublished.fetch_add(1, std::memory_order_relaxed); }
+    void NotePassTracked() { g_passesTracked.fetch_add(1, std::memory_order_relaxed); }
+    void NotePassUntracked() { g_passesUntracked.fetch_add(1, std::memory_order_relaxed); }
 
     void NotePassFrustum(std::uintptr_t returnRva, float fovRadians, float projectionRatio)
     {

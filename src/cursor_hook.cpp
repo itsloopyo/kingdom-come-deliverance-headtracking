@@ -181,11 +181,14 @@ namespace kcd_ht::cursor
                 return ReadHeldOffset(dx, dy);
 
             const float fov = g_aim.fovRadians.load(std::memory_order_relaxed);
-            const float ratio = g_aim.projectionRatio.load(std::memory_order_relaxed);
-            if (!FrustumIsUsable(fov, ratio)) return false;
 
             float width = 0.0f, height = 0.0f;
             if (!ScreenSize(width, height)) return false;
+
+            // The back buffer IS the aspect the frame is drawn at, so it cannot
+            // disagree with the picture the way a camera field can.
+            const float ratio = width / height;
+            if (!FrustumIsUsable(fov, ratio)) return false;
 
             AimProjection aim;
             aim.tanRight = g_aim.tanRight.load(std::memory_order_relaxed);
@@ -313,14 +316,13 @@ namespace kcd_ht::cursor
         return ScreenSize(width, height);
     }
 
-    void SubmitAim(const AimProjection& aim, float fovRadians, float projectionRatio,
+    void SubmitAim(const AimProjection& aim, float fovRadians,
                    float headYawDeg, float headPitchDeg)
     {
         g_aim.tanRight.store(aim.tanRight, std::memory_order_relaxed);
         g_aim.tanUp.store(aim.tanUp, std::memory_order_relaxed);
         g_aim.inFront.store(aim.inFront, std::memory_order_relaxed);
         g_aim.fovRadians.store(fovRadians, std::memory_order_relaxed);
-        g_aim.projectionRatio.store(projectionRatio, std::memory_order_relaxed);
         g_aim.headYaw.store(headYawDeg, std::memory_order_relaxed);
         g_aim.headPitch.store(headPitchDeg, std::memory_order_relaxed);
         g_aim.stampMs.store(GetTickCount64(), std::memory_order_relaxed);

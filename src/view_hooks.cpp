@@ -187,6 +187,7 @@ namespace kcd_ht
             }
 
             g_poses.Publish(pose, positionActive, GetTickCount64());
+            diagnostics::NotePosePublished();
         }
 
         // Records which camera the frame is being drawn from. Nothing is
@@ -240,8 +241,17 @@ namespace kcd_ht
                 || camera != g_systemViewCamera.load(std::memory_order_relaxed)
                 || !g_poses.TryTake(snapshot, GetTickCount64()))
             {
+                // Only a pass built from the PLAYER's camera counts as one that
+                // should have been tracked; the shadow and reflection passes
+                // reach here every frame and are supposed to go through clean.
+                if (camera != nullptr
+                    && camera == g_systemViewCamera.load(std::memory_order_relaxed))
+                {
+                    diagnostics::NotePassUntracked();
+                }
                 return g_origPassInfo(passInfo, camera, flags);
             }
+            diagnostics::NotePassTracked();
 
             // The pose is NOT consumed here. The pass-info builder has 14 call
             // sites and more than one of them can build from the player's camera
@@ -272,7 +282,8 @@ namespace kcd_ht
 
             if (IsGeneralPass(returnRva))
             {
-                cursor::SubmitAim(ProjectAim(clean, tracked), passFov, passRatio,
+                cursor::SubmitAim(ProjectAim(clean, tracked),
+                                  diagnostics::ViewFieldOfViewRadians(),
                                   snapshot.pose.yaw, snapshot.pose.pitch);
             }
             diagnostics::NotePassFrustum(returnRva, passFov, passRatio);

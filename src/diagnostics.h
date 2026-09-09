@@ -30,6 +30,29 @@ namespace kcd_ht::diagnostics
     // is due. @p view is the CView the engine has just updated.
     void NoteActiveViewUpdate(const void* view);
 
+    // The field of view off the PLAYER'S VIEW camera, in radians, or 0 before
+    // the first active view update.
+    //
+    // This is cl_fov - it reads 75 on a game set to 75 and 65 on one left at
+    // the default, and KCD's own slider only offers 60 to 75. The camera handed
+    // to the render pass carries a flat 40 for stretches of play, identical on
+    // both installs and outside that range, so it is not this game's frustum
+    // whatever else it is. The reticle scales by tan(fov/2), so picking the 40
+    // up moves the crosshair 2.1x too far while the picture moves normally.
+    float ViewFieldOfViewRadians();
+
+    // Counts what actually reaches the picture. A pose is invalidated at the
+    // top of every active view update and only republished if the tracking,
+    // session and gameplay gates all pass, so a frame whose gate fails renders
+    // CLEAN. That is invisible in a screenshot and unmistakable here: a picture
+    // alternating between tracked and clean reads as a camera that barely
+    // moves, while the crosshair - held for 250ms - still shows the full
+    // deflection. Compare posesPublished against passesTracked on the
+    // heartbeat; they should be within a frame or two of each other.
+    void NotePosePublished();
+    void NotePassTracked();
+    void NotePassUntracked();
+
     // Names every pass-info build made from the player's camera, once per
     // distinct call site, with the frustum that pass carries and whether it is
     // the world pass the reticle is scaled by. The engine builds several from
