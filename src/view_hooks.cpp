@@ -19,6 +19,7 @@
 #include "game_state.h"
 #include "hook_install.h"
 #include "logging.h"
+#include "native_tracking.h"
 #include "pose_channel.h"
 #include "view_injection.h"
 
@@ -137,6 +138,9 @@ namespace kcd_ht
         // hook below.
         void __fastcall CViewUpdate_Detour(void* self, float frameTime, bool isActive)
         {
+            const bool trackingEnabled = Runtime().trackingEnabled.load();
+            const bool nativeTrackingReady = isActive
+                && native_tracking::Update(g_moduleBase, trackingEnabled);
             g_origCViewUpdate(self, frameTime, isActive);
 
             // Only the ACTIVE view decides the frame's pose. The engine walks
@@ -150,7 +154,7 @@ namespace kcd_ht
             ApplyFieldOfViewOverride();
             diagnostics::NoteActiveViewUpdate(self);
 
-            if (!Runtime().trackingEnabled.load()) return;
+            if (!trackingEnabled || !nativeTrackingReady) return;
 
             const float dt = g_frameClock.Tick();
             if (!g_session->Update(dt)) return;

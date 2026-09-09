@@ -25,3 +25,11 @@ if(MSVC)
 endif()
 
 add_test(NAME kcd_tests COMMAND kcd_tests)
+
+add_executable(native_tracking_tests native_tracking_tests.cpp ../src/native_tracking.cpp)
+target_include_directories(native_tracking_tests PRIVATE ../src)
+target_link_libraries(native_tracking_tests PRIVATE cameraunlock)
+if(MSVC)
+    target_compile_options(native_tracking_tests PRIVATE /W4 /WX)
+endif()
+add_test(NAME native_tracking_tests COMMAND native_tracking_tests)

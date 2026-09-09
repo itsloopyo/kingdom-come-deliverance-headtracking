@@ -29,6 +29,10 @@ An unofficial head tracking mod for Kingdom Come: Deliverance that moves the vie
 4. Configure OpenTrack to output UDP to `127.0.0.1:4242` (see below).
 5. Launch the game.
 
+The mod disables the game's built-in Tobii integration while head tracking is
+enabled, preventing it from adding a second camera movement. Toggling the mod
+off restores the previous Tobii settings. Tobii through OpenTrack keeps working.
+
 [Lopari](https://lopari.app) installs and launches it for you in one click.
 
 If the installer cannot find your game, point it at the folder yourself. Either

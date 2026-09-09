@@ -68,6 +68,7 @@ set(MOD_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/fov_override.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hotkeys.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/native_tracking.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/view_hooks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/builds/build_registry.cpp
 )
