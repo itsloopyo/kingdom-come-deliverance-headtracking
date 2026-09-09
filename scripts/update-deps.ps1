@@ -88,11 +88,13 @@ try {
         "- dinput8.dll SHA-256: ``$dllSha``",
         "- Fetched at: $($meta.FetchedAt)",
         '',
-        '`dinput8.dll` is extracted from the upstream asset untouched. It is deployed to',
-        '`<game>/Bin/Win64/dinput8.dll`, beside KingdomCome.exe. WHGame.dll - the module',
-        'that carries the whole engine and the camera code - imports DINPUT8.dll directly,',
-        'and the application directory is searched before System32, so the proxy loads with',
-        'no launch-option changes and forwards every DirectInput export on to the real DLL.'
+        '`dinput8.dll` is extracted from the upstream asset untouched. It is deployed',
+        'beside KingdomCome.exe - `<game>/Bin/Win64/` on Steam and GOG, the package',
+        '`Content` folder on Game Pass. WHGame.dll - the module that carries the whole',
+        'engine and the camera code - imports DINPUT8.dll directly in every one of those',
+        'builds, and the application directory is searched before System32, so the proxy',
+        'loads with no launch-option changes and forwards every DirectInput export on to',
+        'the real DLL.'
     ) -join "`n"
     Set-Content -Path $vendorReadme -Value $readme -Encoding UTF8
 

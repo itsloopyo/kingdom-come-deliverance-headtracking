@@ -123,6 +123,12 @@ Write-Host '--- Nexus ZIP ---' -ForegroundColor Yellow
 
 # Nexus users manage their own ASI loader, so this ships the mod's .asi under
 # the deploy subtree plus the notices below - no vendored loader, no scripts.
+#
+# The subtree is the Steam and GOG layout. The Game Pass package has no
+# Bin\Win64 - KingdomCome.exe sits directly in Content - so a Game Pass user
+# takes the .asi out of Bin\Win64 rather than extracting over the game folder,
+# which is what NEXUS_MODS.md tells them to do. One archive, one instruction:
+# a second ZIP shape would be a second thing to pick wrong on a download page.
 $nexusStaging = Join-Path $releaseDir 'staging-nexus'
 if (Test-Path $nexusStaging) { Remove-Item -Recurse -Force $nexusStaging }
 $nexusGameDir = Join-Path $nexusStaging 'Bin\Win64'
