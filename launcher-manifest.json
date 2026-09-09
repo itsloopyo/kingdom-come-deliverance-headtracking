@@ -11,11 +11,13 @@
   "files": [
     {
       "source": "vendor/ultimate-asi-loader/dinput8.dll",
-      "target": "Bin/Win64/dinput8.dll"
+      "target": "dinput8.dll",
+      "anchor": "exe_dir"
     },
     {
       "source": "plugins/KingdomComeDeliveranceHeadTracking.asi",
-      "target": "Bin/Win64/KingdomComeDeliveranceHeadTracking.asi"
+      "target": "KingdomComeDeliveranceHeadTracking.asi",
+      "anchor": "exe_dir"
     }
   ],
 
