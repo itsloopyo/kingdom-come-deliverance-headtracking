@@ -23,9 +23,6 @@ namespace kcd_ht::diagnostics
         const cameraunlock::UdpReceiver* g_receiver = nullptr;
         const Session* g_session = nullptr;
 
-        std::atomic<std::uint64_t> g_posesPublished{0};
-        std::atomic<std::uint64_t> g_passesTracked{0};
-        std::atomic<std::uint64_t> g_passesUntracked{0};
         std::atomic<std::uint64_t> g_viewUpdates{0};
 
         // The two frustum fields the reticle projection needs, captured off the
@@ -69,8 +66,7 @@ namespace kcd_ht::diagnostics
             // question being asked.
             Log::Line("heartbeat viewUpdates=%llu enabled=%s udp=%s udpData=%s raw=(Y=%.2f P=%.2f R=%.2f) "
                       "rawPos=(%.3f %.3f %.3f) pos=%s yawMode=%s smoothing=%s gameplay=%s "
-                      "vFov=%.1fdeg ratio=%.3f hud=%.0fx%.0f "
-                      "posesPublished=%llu passesTracked=%llu passesClean=%llu",
+                      "vFov=%.1fdeg ratio=%.3f hud=%.0fx%.0f",
                       static_cast<unsigned long long>(updates),
                       Runtime().trackingEnabled.load() ? "ON" : "OFF",
                       UdpPortState(),
@@ -83,10 +79,7 @@ namespace kcd_ht::diagnostics
                       InActiveGameplay() ? "YES" : "NO",
                       static_cast<double>(g_fovRadians.load() * kRadToDeg),
                       static_cast<double>(g_projectionRatio.load()),
-                      static_cast<double>(hudW), static_cast<double>(hudH),
-                      static_cast<unsigned long long>(g_posesPublished.load(std::memory_order_relaxed)),
-                      static_cast<unsigned long long>(g_passesTracked.load(std::memory_order_relaxed)),
-                      static_cast<unsigned long long>(g_passesUntracked.load(std::memory_order_relaxed)));
+                      static_cast<double>(hudW), static_cast<double>(hudH));
         }
 
         // Said once. The reticle projection reads column 0 as RIGHT, and it can
@@ -298,45 +291,6 @@ namespace kcd_ht::diagnostics
         watch::g_handler = AddVectoredExceptionHandler(1, &watch::OnException);
         if (HANDLE arming = CreateThread(nullptr, 0, &watch::ArmEveryThread, nullptr, 0, nullptr))
             CloseHandle(arming);
-    }
-
-    float ViewFieldOfViewRadians() { return g_fovRadians.load(std::memory_order_relaxed); }
-
-    void NotePosePublished() { g_posesPublished.fetch_add(1, std::memory_order_relaxed); }
-    void NotePassTracked() { g_passesTracked.fetch_add(1, std::memory_order_relaxed); }
-    void NotePassUntracked() { g_passesUntracked.fetch_add(1, std::memory_order_relaxed); }
-
-    void NotePassFrustum(std::uintptr_t returnRva, float fovRadians, float projectionRatio)
-    {
-        // One line per distinct call site, not per frame. The set is small and
-        // fixed for a build, and what matters is which sites exist and what
-        // frustum each carries - a repeat every frame would say nothing more.
-        constexpr int kMaxSites = 8;
-        static std::atomic<std::uintptr_t> seen[kMaxSites]{};
-
-        for (int i = 0; i < kMaxSites; ++i)
-        {
-            std::uintptr_t slot = seen[i].load(std::memory_order_relaxed);
-            if (slot == returnRva) return;
-            if (slot != 0) continue;
-
-            std::uintptr_t expected = 0;
-            if (!seen[i].compare_exchange_strong(expected, returnRva,
-                                                 std::memory_order_relaxed))
-            {
-                --i;  // Another thread took this slot; re-read it.
-                continue;
-            }
-
-            const bool isWorld = returnRva == builds::Offsets().kGeneralPassReturnRva;
-            Log::Line("render pass from RVA 0x%08X: vFov=%.1fdeg ratio=%.3f%s",
-                      static_cast<unsigned>(returnRva),
-                      static_cast<double>(fovRadians * 57.2957795f),
-                      static_cast<double>(projectionRatio),
-                      isWorld ? "  <- the world pass, the crosshair is scaled by this one"
-                              : "  (head pose applied, frustum ignored)");
-            return;
-        }
     }
 
     void NoteSystemRender(const void* system)

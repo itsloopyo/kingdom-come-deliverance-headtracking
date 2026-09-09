@@ -46,14 +46,6 @@ namespace
                      && offsets.kConsoleGlobalRva < profile.Fingerprint.SizeOfImage,
               name + ": every pinned RVA lands inside the module image");
 
-        // The world pass is a call site INSIDE CSystem::Render, so its return
-        // address has to land within that function. A zero, or an address
-        // outside it, means the reticle would be scaled by whichever pass
-        // happened to build last - the fault this field exists to prevent.
-        Check(failures, offsets.kGeneralPassReturnRva > offsets.kSystemRenderRva
-                     && offsets.kGeneralPassReturnRva - offsets.kSystemRenderRva < 0x1000,
-              name + ": the world pass return address is inside CSystem::Render");
-
         // m_viewParams is 12 floats of position + quaternion + more starting at
         // 0x14; the camera has to sit past it, and the mod must never write into it.
         Check(failures, offsets.kCViewCameraOffset > offsets.kCViewParamsOffset,

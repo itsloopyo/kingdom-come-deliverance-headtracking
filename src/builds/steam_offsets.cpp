@@ -28,7 +28,6 @@ namespace kcd_ht::builds
             /* kCViewParamsOffset            */ 0x00000014u,
             /* kCameraSize                   */ 0x00000260u,
             /* kPassInfoFromCameraRva        */ 0x00353CD8u,
-            /* kGeneralPassReturnRva         */ 0x003E4488u,
             /* kPrepareCullBufferRva         */ 0x002D7E34u,
             /* kSystemRenderRva              */ 0x003E42F0u,
             /* kSystemViewCameraOffset       */ 0x00000288u,

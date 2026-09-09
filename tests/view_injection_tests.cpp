@@ -66,14 +66,13 @@ int RunViewInjectionTests()
     }
 
     {
-        // Yaw is about the camera's up axis (+Z) and reaches the engine
-        // unnegated, so a +90 tracker yaw swings the forward axis from +Y
-        // towards -X.
+        // Yaw is about the camera's up axis (+Z) and the boundary negates it, so
+        // a +90 tracker yaw swings the forward axis from +Y towards +X.
         HeadPose pose; pose.yaw = 90.0f;
         const Matrix34f out = ApplyHeadPose(base, pose, false, false);
         const Vec3f f = Forward(out);
-        Check(failures, NearEqual(f.x, -1.0) && NearEqual(f.y, 0.0) && NearEqual(f.z, 0.0),
-              "yaw +90 turns the view left about the up axis");
+        Check(failures, NearEqual(f.x, 1.0) && NearEqual(f.y, 0.0) && NearEqual(f.z, 0.0),
+              "yaw +90 turns the view right about the up axis");
         Check(failures, IsOrthonormal(out), "yaw keeps the basis orthonormal");
     }
 

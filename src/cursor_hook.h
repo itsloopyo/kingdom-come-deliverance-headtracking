@@ -29,15 +29,5 @@ namespace kcd_ht::cursor
     // the liveness signal: when these stop arriving the cursor goes back to
     // wherever the game wanted it, which is what makes menus and loading screens
     // look after themselves.
-    //
-    // @p fovRadians is the VERTICAL field of view of the camera the world is
-    // drawn with. The aspect is NOT taken from a camera field: it is the HUD's
-    // own pixel space, which is the back buffer and cannot disagree with what
-    // the player is looking at.
-    //
-    // @p headYawDeg and @p headPitchDeg are the tracker's own angles. They are
-    // carried only so the reticle probe can print the head angle beside the
-    // offset it produced: the projection is geometric and never reads them.
-    void SubmitAim(const AimProjection& aim, float fovRadians,
-                   float headYawDeg, float headPitchDeg);
+    void SubmitAim(const AimProjection& aim, float fovRadians, float projectionRatio);
 }

@@ -31,8 +31,6 @@ namespace kcd_ht::cursor
             std::atomic<float> projectionRatio{0.0f};
             std::atomic<bool> inFront{false};
             std::atomic<std::uint64_t> stampMs{0};
-            std::atomic<float> headYaw{0.0f};
-            std::atomic<float> headPitch{0.0f};
         };
 
         AimState g_aim;
@@ -181,14 +179,11 @@ namespace kcd_ht::cursor
                 return ReadHeldOffset(dx, dy);
 
             const float fov = g_aim.fovRadians.load(std::memory_order_relaxed);
+            const float ratio = g_aim.projectionRatio.load(std::memory_order_relaxed);
+            if (!FrustumIsUsable(fov, ratio)) return false;
 
             float width = 0.0f, height = 0.0f;
             if (!ScreenSize(width, height)) return false;
-
-            // The back buffer IS the aspect the frame is drawn at, so it cannot
-            // disagree with the picture the way a camera field can.
-            const float ratio = width / height;
-            if (!FrustumIsUsable(fov, ratio)) return false;
 
             AimProjection aim;
             aim.tanRight = g_aim.tanRight.load(std::memory_order_relaxed);
@@ -204,50 +199,6 @@ namespace kcd_ht::cursor
             g_held.dy.store(dy, std::memory_order_relaxed);
             g_held.valid.store(true, std::memory_order_relaxed);
             return true;
-        }
-
-        // Which call site the game positions the crosshair through, what it
-        // asked for, and what we did to it. Rate-limited and bounded the way
-        // the culling probe is, because the question it answers - does the
-        // crosshair move the right way, by the right amount, at the site the
-        // player is actually looking at - cannot be answered from a screenshot
-        // without knowing all four numbers at once.
-        //
-        // Read it as: a head turn one way should put `dx` the OTHER way, because
-        // the aim point the player is looking at swings across the frame against
-        // the head. `posIn` says whether the game handed us screen centre or an
-        // already-aimed point, which decides whether adding an offset is exact
-        // or a first-order shift.
-        void LogReticleSample(std::uintptr_t returnRva, int mode, const float* pos,
-                              float dx, float dy)
-        {
-            static std::atomic<int> left{24};
-            static std::atomic<std::uint64_t> lastTick{0};
-            if (left.load(std::memory_order_relaxed) <= 0) return;
-
-            const std::uint64_t now = GetTickCount64();
-            if (now - lastTick.load(std::memory_order_relaxed) < 400) return;
-            lastTick.store(now, std::memory_order_relaxed);
-            if (left.fetch_sub(1, std::memory_order_relaxed) <= 0) return;
-
-            float width = 0.0f, height = 0.0f;
-            ScreenSize(width, height);
-
-            Log::Line("reticle site=0x%08X mode=%d posIn=(%.1f %.1f) centre=(%.1f %.1f) "
-                      "dx=%+.1f dy=%+.1f tanRight=%+.4f tanUp=%+.4f head=(Y%+.2f P%+.2f) "
-                      "vFov=%.1fdeg ratio=%.3f",
-                      static_cast<unsigned>(returnRva), mode,
-                      static_cast<double>(pos[0]), static_cast<double>(pos[1]),
-                      static_cast<double>(width * 0.5f), static_cast<double>(height * 0.5f),
-                      static_cast<double>(dx), static_cast<double>(dy),
-                      static_cast<double>(g_aim.tanRight.load(std::memory_order_relaxed)),
-                      static_cast<double>(g_aim.tanUp.load(std::memory_order_relaxed)),
-                      static_cast<double>(g_aim.headYaw.load(std::memory_order_relaxed)),
-                      static_cast<double>(g_aim.headPitch.load(std::memory_order_relaxed)),
-                      static_cast<double>(g_aim.fovRadians.load(std::memory_order_relaxed)
-                                          * 57.2957795f),
-                      static_cast<double>(
-                          g_aim.projectionRatio.load(std::memory_order_relaxed)));
         }
 
         void __fastcall SetCursorPosition_Detour(void* self, void* element, const float* pos, int mode)
@@ -267,18 +218,10 @@ namespace kcd_ht::cursor
                 // first-order shift of that point into the tracked view - right at
                 // the centre and increasingly approximate towards the edges, which
                 // is where that cursor never is.
-                LogReticleSample(returnRva, mode, pos, dx, dy);
-
                 const float moved[2] = { pos[0] + dx, pos[1] + dy };
                 g_orig(self, element, moved, mode);
                 return;
             }
-
-            // A site we did NOT move, sampled the same way. If the crosshair the
-            // player is watching comes through here, the offset above is landing
-            // on something else and no amount of correcting its sign will show.
-            if (pos != nullptr && IsAimFresh())
-                LogReticleSample(returnRva, mode, pos, 0.0f, 0.0f);
 
             g_orig(self, element, pos, mode);
         }
@@ -316,15 +259,13 @@ namespace kcd_ht::cursor
         return ScreenSize(width, height);
     }
 
-    void SubmitAim(const AimProjection& aim, float fovRadians,
-                   float headYawDeg, float headPitchDeg)
+    void SubmitAim(const AimProjection& aim, float fovRadians, float projectionRatio)
     {
         g_aim.tanRight.store(aim.tanRight, std::memory_order_relaxed);
         g_aim.tanUp.store(aim.tanUp, std::memory_order_relaxed);
         g_aim.inFront.store(aim.inFront, std::memory_order_relaxed);
         g_aim.fovRadians.store(fovRadians, std::memory_order_relaxed);
-        g_aim.headYaw.store(headYawDeg, std::memory_order_relaxed);
-        g_aim.headPitch.store(headPitchDeg, std::memory_order_relaxed);
+        g_aim.projectionRatio.store(projectionRatio, std::memory_order_relaxed);
         g_aim.stampMs.store(GetTickCount64(), std::memory_order_relaxed);
     }
 }

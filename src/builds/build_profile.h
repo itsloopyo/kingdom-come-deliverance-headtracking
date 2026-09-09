@@ -58,19 +58,6 @@ namespace kcd_ht::builds
         // the same thing.
         std::uint32_t kPassInfoFromCameraRva;
 
-        // RETURN address of the ONE pass-info build that makes the world pass -
-        // the call at CSystem::Render+0x193 that RenderWorld is then handed.
-        //
-        // The head pose goes into every pass built from the player's camera,
-        // because they all reach the picture. The reticle's SCALE must come from
-        // this one alone. The engine builds further passes from the same CCamera
-        // with their own frustum - the first-person weapon pass reads a flat 40
-        // degrees on both shipped builds, against the 65 or 75 the world is drawn
-        // at - and whichever built last before the HUD drew was setting the
-        // reticle's throw, so it moved about twice as far as the aim point on
-        // some frames and correctly on others.
-        std::uint32_t kGeneralPassReturnRva;
-
         // The engine's occlusion cull-buffer prep, (cullBuffer, CCamera*). It
         // builds the screen-space matrix every object's bounding box is tested
         // against, and it is handed the game's own camera rather than the one

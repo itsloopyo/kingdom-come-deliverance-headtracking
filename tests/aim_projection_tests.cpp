@@ -94,15 +94,15 @@ int RunAimProjectionTests()
     }
 
     {
-        // Pure yaw is the mirror of the above. Tracker yaw reaches the engine
-        // unnegated, so a positive yaw turns the view left and the aim point -
-        // which stays where the game is aiming - falls to the right of centre.
+        // Pure yaw is the mirror of the above. The boundary negates tracker yaw,
+        // so a positive yaw turns the view right and the aim point falls to the
+        // left of centre.
         HeadPose pose; pose.yaw = 20.0f;
         const AimProjection aim = Project(level, pose, false);
         Check(failures, aim.inFront && NearEqual(aim.tanUp, 0.0),
               "pure yaw does not move the reticle vertically");
-        Check(failures, aim.tanRight > 0.0f,
-              "turning the head left leaves the reticle right of centre");
+        Check(failures, aim.tanRight < 0.0f,
+              "turning the head right leaves the reticle left of centre");
     }
 
     {
@@ -227,7 +227,7 @@ int RunAimProjectionTests()
         pose.pitch = 25.0f;
         const AimProjection aim = Project(level, pose, false);
 
-        const double y = 25.0 * kDegToRad;    // yaw reaches the engine unnegated
+        const double y = -25.0 * kDegToRad;   // the boundary negates yaw
         const double p = 25.0 * kDegToRad;
         const double wantRight = std::tan(y) / std::cos(p);
         const double wantUp = -std::tan(p);
