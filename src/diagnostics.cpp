@@ -293,6 +293,39 @@ namespace kcd_ht::diagnostics
             CloseHandle(arming);
     }
 
+    void NotePassFrustum(std::uintptr_t returnRva, float fovRadians, float projectionRatio)
+    {
+        // One line per distinct call site, not per frame. The set is small and
+        // fixed for a build, and what matters is which sites exist and what
+        // frustum each carries - a repeat every frame would say nothing more.
+        constexpr int kMaxSites = 8;
+        static std::atomic<std::uintptr_t> seen[kMaxSites]{};
+
+        for (int i = 0; i < kMaxSites; ++i)
+        {
+            std::uintptr_t slot = seen[i].load(std::memory_order_relaxed);
+            if (slot == returnRva) return;
+            if (slot != 0) continue;
+
+            std::uintptr_t expected = 0;
+            if (!seen[i].compare_exchange_strong(expected, returnRva,
+                                                 std::memory_order_relaxed))
+            {
+                --i;  // Another thread took this slot; re-read it.
+                continue;
+            }
+
+            const bool isWorld = returnRva == builds::Offsets().kGeneralPassReturnRva;
+            Log::Line("render pass from RVA 0x%08X: vFov=%.1fdeg ratio=%.3f%s",
+                      static_cast<unsigned>(returnRva),
+                      static_cast<double>(fovRadians * 57.2957795f),
+                      static_cast<double>(projectionRatio),
+                      isWorld ? "  <- the world pass, the crosshair is scaled by this one"
+                              : "  (head pose applied, frustum ignored)");
+            return;
+        }
+    }
+
     void NoteSystemRender(const void* system)
     {
         if (system == nullptr) return;

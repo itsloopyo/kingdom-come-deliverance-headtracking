@@ -211,8 +211,30 @@ namespace kcd_ht
         // and comes straight back out. Every other reader - and the game reads
         // this camera from 141 call sites for interaction focus, aim and
         // raycasts - sees the rotation the game computed.
+        // True only for the pass CSystem::Render builds for RenderWorld. The
+        // frustum on that one is the frustum the world is drawn with; the other
+        // passes built from the same camera carry their own, and scaling the
+        // reticle by one of those throws it off by the ratio between them.
+        bool IsGeneralPass(std::uintptr_t returnRva)
+        {
+            const std::uint32_t site = builds::Offsets().kGeneralPassReturnRva;
+            if (site == 0)
+            {
+                static std::atomic<bool> complained{false};
+                if (!complained.exchange(true))
+                    Log::Line("This build profile does not pin the world pass, so the "
+                              "crosshair cannot be scaled to the frustum the world is drawn "
+                              "with - leaving the game's crosshair alone.");
+                return false;
+            }
+            return returnRva == site;
+        }
+
         void* __fastcall PassInfoFromCamera_Detour(void* passInfo, void* camera, int flags)
         {
+            const std::uintptr_t returnRva =
+                reinterpret_cast<std::uintptr_t>(_ReturnAddress()) - g_moduleBase;
+
             PoseSnapshot snapshot;
             if (camera == nullptr
                 || camera != g_systemViewCamera.load(std::memory_order_relaxed)
@@ -243,10 +265,17 @@ namespace kcd_ht
             // and they do disagree within a session - the intro cinematic renders
             // at ratio 1.333 while play is 1.778 - and a reticle projected
             // through the wrong frustum is wrong by that ratio.
-            cursor::SubmitAim(ProjectAim(clean, tracked),
-                              *reinterpret_cast<const float*>(copy + offsets.kCCameraFovOffset),
-                              *reinterpret_cast<const float*>(
-                                  copy + offsets.kCCameraProjectionRatioOffset));
+            const float passFov =
+                *reinterpret_cast<const float*>(copy + offsets.kCCameraFovOffset);
+            const float passRatio =
+                *reinterpret_cast<const float*>(copy + offsets.kCCameraProjectionRatioOffset);
+
+            if (IsGeneralPass(returnRva))
+            {
+                cursor::SubmitAim(ProjectAim(clean, tracked), passFov, passRatio,
+                                  snapshot.pose.yaw, snapshot.pose.pitch);
+            }
+            diagnostics::NotePassFrustum(returnRva, passFov, passRatio);
 
             diagnostics::ProbeCulling(g_moduleBase, clean, tracked);
 

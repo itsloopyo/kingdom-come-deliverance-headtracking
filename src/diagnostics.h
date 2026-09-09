@@ -30,6 +30,13 @@ namespace kcd_ht::diagnostics
     // is due. @p view is the CView the engine has just updated.
     void NoteActiveViewUpdate(const void* view);
 
+    // Names every pass-info build made from the player's camera, once per
+    // distinct call site, with the frustum that pass carries and whether it is
+    // the world pass the reticle is scaled by. The engine builds several from
+    // the same CCamera and they do NOT share a field of view, so a log that
+    // reports only one of them cannot show a reticle scaled by the wrong one.
+    void NotePassFrustum(std::uintptr_t returnRva, float fovRadians, float projectionRatio);
+
     // TEMPORARY culling probe. Records which CCamera the engine's asynchronous
     // occlusion check is testing object bounding boxes against, because that
     // test - and not frustum culling - is what removes buildings and NPCs once

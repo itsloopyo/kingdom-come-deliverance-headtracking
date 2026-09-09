@@ -29,5 +29,11 @@ namespace kcd_ht::cursor
     // the liveness signal: when these stop arriving the cursor goes back to
     // wherever the game wanted it, which is what makes menus and loading screens
     // look after themselves.
-    void SubmitAim(const AimProjection& aim, float fovRadians, float projectionRatio);
+    //
+    // @p headYawDeg and @p headPitchDeg are the tracker's own angles, before the
+    // engine-boundary negation. They are carried only so the reticle probe can
+    // print the head angle beside the offset it produced: the projection is
+    // geometric and never reads them.
+    void SubmitAim(const AimProjection& aim, float fovRadians, float projectionRatio,
+                   float headYawDeg, float headPitchDeg);
 }
