@@ -12,7 +12,7 @@
     "path": "CameraUnlock.ini",
     "anchor": "exe_dir",
     "legacy_source": "HeadTracking.ini",
-    "canonical_since": "0.1.0",
+    "canonical_since": "0.0.1",
     "per_game": {}
   },
 
