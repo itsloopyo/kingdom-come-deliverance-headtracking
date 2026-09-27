@@ -23,8 +23,22 @@ build = { cmd = "cmake --build build --config Release", depends-on = ["setup"] }
 build-debug = { cmd = "cmake --build build --config Debug", depends-on = ["setup"] }
 
 # Characterization tests for the parts of the provider that are decidable
-# without a game process. Same build the DLL comes out of, so CI runs it too.
+# without a game process, the config differential test
+# (tests/config_differential), and core's canonical config lint over the
+# committed file and every file that test migrated (run with node). Same build
+# the DLL comes out of, so CI runs it too.
 test = { cmd = "ctest --test-dir build -C Release --output-on-failure", depends-on = ["build"] }
+
+# Rewrite the committed CameraUnlock.ini, the table's fresh render and so the
+# file a first launch creates, after a change to a row, a comment or a default,
+# then write the manifest config block's per_game from it. The render test in
+# kcd_tests fails until the committed file matches.
+render-config = { cmd = "build/tests/Release/kcd_tests.exe --render-config CameraUnlock.ini && node cameraunlock-core/scripts/encode-seed.mjs", depends-on = ["build"] }
+
+# Checks the newest release/*-installer.zip against its launcher-manifest.json,
+# and that the Nexus ZIP carries neither CameraUnlock.ini nor HeadTracking.ini.
+# Run after package.
+validate-manifest = "node cameraunlock-core/scripts/validate-manifest.mjs"
 
 # Print the PE fingerprint of every installed copy of the game. Every camera
 # address this mod uses is a WHGame.dll RVA, so a fingerprint change IS a break:
@@ -48,7 +62,8 @@ clean-all = { cmd = """
     powershell -Command "foreach ($d in @('build','release')) { if (Test-Path $d) { Remove-Item $d -Recurse -Force } }; Write-Host 'All build artifacts cleaned' -ForegroundColor Green"
 """ }
 
-# Package release ZIPs (installer + nexus).
+# Package release ZIPs (installer + nexus). Depends on test, so the config
+# differential test gates every package, CI's included.
 package = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/package-release.ps1", depends-on = ["test"] }
 
 # Build + deploy to every installed copy of the game (dev loop). Steam, GOG and
@@ -68,4 +83,7 @@ uninstall = "powershell -ExecutionPolicy Bypass -File scripts/uninstall-all.ps1"
 release = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/release.ps1" }
 
 [dependencies]
-# No pixi-managed deps - relies on system CMake + Visual Studio.
+# CMake and Visual Studio come from the system. Node runs core's canonical
+# config lint under `test`, render-config's per_game step and validate-manifest,
+# pinned to the release core's own lock resolves.
+nodejs = "==26.5.0"

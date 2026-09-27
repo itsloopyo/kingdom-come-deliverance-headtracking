@@ -18,6 +18,8 @@ target_include_directories(kcd_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/cameraunlock-core/cpp/include
 )
 
+target_compile_definitions(kcd_tests PRIVATE KCD_REPO_DIR="${CMAKE_SOURCE_DIR}")
+
 target_link_libraries(kcd_tests PRIVATE cameraunlock)
 
 if(MSVC)

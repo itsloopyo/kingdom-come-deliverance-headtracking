@@ -28,7 +28,6 @@ namespace kcd_ht
     namespace
     {
         namespace hooks = cameraunlock::hooks;
-        using cameraunlock::TrackingMode;
 
         // The engine and the whole game live in this one module; KingdomCome.exe
         // is a launcher stub with no camera code in it at all.
@@ -50,6 +49,7 @@ namespace kcd_ht
         std::unique_ptr<cameraunlock::UdpReceiver> g_receiver;
         std::unique_ptr<Session> g_session;
         std::unique_ptr<cameraunlock::input::HotkeyPoller> g_hotkeys;
+        std::unique_ptr<cameraunlock::config::ConfigOwner<Config>> g_owner;
 
         // Open truncates, so every launch starts from scratch, and it rotates
         // the outgoing log to HeadTracking.prev.log first. That second
@@ -72,13 +72,14 @@ namespace kcd_ht
 
         void LogConfig(const Config& config)
         {
-            Log::Line("config: port=%d enabled=%s worldYaw=%s local=%.2f remote=%.2f pos=%s "
-                      "limits=(x %.2f, y +%.2f/-%.2f, z %.2f fwd/%.2f back) fov=%s",
+            Log::Line("config: port=%d enabled=%s worldYaw=%s local=%.2f remote=%.2f rotation=%s "
+                      "pos=%s limits=(x %.2f, y +%.2f/-%.2f, z %.2f fwd/%.2f back) fov=%s",
                       config.udp_port,
                       config.enable_on_startup ? "yes" : "no",
                       config.world_space_yaw ? "yes" : "no",
                       static_cast<double>(config.local_smoothing),
                       static_cast<double>(config.remote_smoothing),
+                      config.rotation_enabled ? "on" : "off",
                       config.position_enabled ? "on" : "off",
                       static_cast<double>(config.limit_x),
                       static_cast<double>(config.limit_y),
@@ -120,8 +121,7 @@ namespace kcd_ht
                 config.limit_x, config.limit_y, config.limit_y_down,
                 config.limit_z, config.limit_z_back,
                 config.local_smoothing, config.remote_smoothing));
-            g_session->SetMode(config.position_enabled ? TrackingMode::RotationAndPosition
-                                                       : TrackingMode::RotationOnly);
+            g_session->SetMode(StartupMode(config));
 
             Runtime().trackingEnabled.store(config.enable_on_startup);
             Runtime().worldSpaceYaw.store(config.world_space_yaw);
@@ -156,10 +156,14 @@ namespace kcd_ht
             OpenSessionLog();
             cameraunlock::diagnostics::InstallCrashHandler();
 
-            const std::string exeDir = ExeDirectoryNarrow();
-            WriteDefaultConfigIfMissing(exeDir);
-            Config config;
-            LoadConfig(exeDir, config);
+            // Reads CameraUnlock.ini, or imports HeadTracking.ini into it or creates
+            // it, on this thread rather than under the loader lock, and after the
+            // log is open so its lines have somewhere to go.
+            g_owner = std::make_unique<cameraunlock::config::ConfigOwner<Config>>(
+                OwnerOptions(ExeDirectory(), cameraunlock::config::DefaultsFile::PerUser()));
+            const cameraunlock::config::ConfigLoadResult<Config> loaded = g_owner->Load();
+            for (const std::string& line : loaded.log) Log::Line("%s", line.c_str());
+            const Config config = loaded.config;
             LogConfig(config);
 
             HMODULE module = WaitForGameModule();
@@ -190,16 +194,17 @@ namespace kcd_ht
 
             if (!InstallViewHooks(moduleBase, *g_session, config.field_of_view)) return 0;
 
-            g_hotkeys = StartHotkeys(*g_session, config);
+            g_hotkeys = StartHotkeys(*g_session, config, *g_owner);
 
             // One line saying what is actually live. The crosshair hook once
             // failed to install for an hour of testing because its own error
             // line sat above three successful ones and nobody read up.
-            Log::Line("init complete. view=on render=on crosshair=%s. End = toggle tracking, "
-                      "Page Up = cycle tracking mode, Page Down = yaw mode (chords "
-                      "Ctrl+Shift+Y/G/H). %s Centre in your tracker app - this mod keeps no "
-                      "centre of its own.",
+            Log::Line("init complete. view=on render=on crosshair=%s. Toggle tracking: %s. "
+                      "Cycle tracking mode: %s. Yaw mode: %s. %s Centre in your tracker app - "
+                      "this mod keeps no centre of its own.",
                       crosshair ? "on" : "OFF (crosshair stays at screen centre)",
+                      config.toggle_key.c_str(), config.cycle_tracking_mode_key.c_str(),
+                      config.yaw_mode_key.c_str(),
                       DescribeUdpPort(config.udp_port, bound).c_str());
             return 0;
         }

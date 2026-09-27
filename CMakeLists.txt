@@ -55,6 +55,7 @@ set(MOD_TESTABLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/config.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/legacy_config/legacy_config.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/exe_paths.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/hotkey_bindings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/game_state.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pose_channel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/view_injection.cpp

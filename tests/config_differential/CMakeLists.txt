@@ -41,3 +41,10 @@ if(MSVC)
 endif()
 
 add_test(NAME config_differential COMMAND kcd_config_differential)
+
+# Core's canonical config lint over the committed file and every file the
+# differential test migrated, which it writes beside itself under migrated\.
+add_test(NAME config_lint COMMAND node
+    ${CMAKE_CURRENT_SOURCE_DIR}/lint-migrated.mjs
+    $<TARGET_FILE_DIR:kcd_config_differential>/migrated)
+set_tests_properties(config_lint PROPERTIES DEPENDS config_differential)

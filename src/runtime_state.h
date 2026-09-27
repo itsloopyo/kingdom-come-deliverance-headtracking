@@ -17,7 +17,7 @@ namespace kcd_ht
                   "receiver must expose IsRemoteConnection() for per-connection smoothing");
 
     // Written by the hotkey thread and read by the hook on every frame, so every
-    // member is atomic. Seeded from the INI at bootstrap.
+    // member is atomic. Seeded from CameraUnlock.ini at bootstrap.
     struct RuntimeState
     {
         std::atomic<bool> trackingEnabled{true};
