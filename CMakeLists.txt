@@ -53,6 +53,7 @@ add_subdirectory(cameraunlock-core/cpp ${CMAKE_BINARY_DIR}/cameraunlock-core)
 set(MOD_TESTABLE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/aim_projection.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/config.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/legacy_config/legacy_config.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/exe_paths.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/game_state.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pose_channel.cpp

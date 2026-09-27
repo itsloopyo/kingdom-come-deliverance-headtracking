@@ -49,7 +49,7 @@ clean-all = { cmd = """
 """ }
 
 # Package release ZIPs (installer + nexus).
-package = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/package-release.ps1", depends-on = ["build"] }
+package = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/package-release.ps1", depends-on = ["test"] }
 
 # Build + deploy to every installed copy of the game (dev loop). Steam, GOG and
 # Game Pass each get the ASI and the loader, in the directory their own

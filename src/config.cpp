@@ -1,15 +1,10 @@
 #include "config.h"
 
-#include <cmath>
-#include <cstdint>
 #include <cstdio>
 #include <string>
 #include <windows.h>
 
-#include <cameraunlock/config/ini_reader.h>
-#include <cameraunlock/math/finite_utils.h>
-#include <cameraunlock/protocol/port_utils.h>
-
+#include "legacy_config/legacy_config.h"
 #include "logging.h"
 
 namespace kcd_ht
@@ -17,90 +12,6 @@ namespace kcd_ht
     namespace
     {
         constexpr char kIniName[] = "HeadTracking.ini";
-        constexpr char kTracking[] = "HeadTracking";
-        constexpr char kHotkeys[] = "Hotkeys";
-        constexpr char kPosition[] = "Position";
-        constexpr char kCamera[] = "Camera";
-
-        // Degrees of VERTICAL field of view. The game's own slider covers 60 to
-        // 75; the band here is wider on both sides because overriding that slider
-        // is the point, and it is what stops a typo from reaching the frustum.
-        constexpr float kMinFieldOfView = 40.0f;
-        constexpr float kMaxFieldOfView = 120.0f;
-
-        // Metres. Deliberately far wider than anything a player would choose - the
-        // bound exists to stop a typo reaching the maths, not to second-guess a
-        // setting.
-        constexpr float kMinPositionLimit = 0.01f;
-        constexpr float kMaxPositionLimit = 5.0f;
-
-        // Nothing downstream of the INI rejects a bad float. strtod accepts "nan"
-        // and "inf" and overflows a literal like 1e400 to +inf; a NaN limit then
-        // poisons the smoothing state for the rest of the session and presents as
-        // the view simply being gone, so the substitution is logged with the key
-        // that caused it instead of being applied quietly.
-        float ReadFloatChecked(const cameraunlock::IniReader& reader, const char* section,
-                               const char* key, float fallback, float lo, float hi)
-        {
-            const float raw = reader.ReadFloat(section, key, fallback);
-            const float value = cameraunlock::math::SanitizeFinite(raw, fallback, lo, hi);
-            if (value != raw)
-                Log::Line("WARNING: config [%s] %s = %g is not a number in [%g, %g] - using %g.",
-                          section, key, static_cast<double>(raw), static_cast<double>(lo),
-                          static_cast<double>(hi), static_cast<double>(value));
-            return value;
-        }
-
-        float ReadPositionLimit(const cameraunlock::IniReader& reader, const char* key,
-                                float fallback)
-        {
-            return ReadFloatChecked(reader, kPosition, key, fallback,
-                                    kMinPositionLimit, kMaxPositionLimit);
-        }
-
-        // Zero is not a field of view, it is the off switch, so it cannot go
-        // through ReadFloatChecked's clamp. Anything else that is not a field of
-        // view a person could play at leaves the game's own setting alone rather
-        // than being clamped into the band: a mistyped value should not silently
-        // change what the player sees, and the game already has a setting of its
-        // own for this.
-        float ReadFieldOfView(const cameraunlock::IniReader& reader, float fallback)
-        {
-            const float raw = reader.ReadFloat(kCamera, "FieldOfView", fallback);
-            if (raw == 0.0f) return 0.0f;
-            if (!std::isfinite(raw) || raw < kMinFieldOfView || raw > kMaxFieldOfView)
-            {
-                Log::Line("WARNING: config [%s] FieldOfView = %g is not a field of view in "
-                          "[%g, %g] - leaving the game's own setting alone.",
-                          kCamera, static_cast<double>(raw), static_cast<double>(kMinFieldOfView),
-                          static_cast<double>(kMaxFieldOfView));
-                return 0.0f;
-            }
-            return raw;
-        }
-
-        // GetAsyncKeyState takes a virtual-key code in 1..254, and the hotkey
-        // poller treats 0 as "unbound" and fires nothing. The mouse buttons are
-        // excluded on top of that: GetAsyncKeyState reports them like any other
-        // key, so ToggleKey=0x01 turns every left-click in normal play into a
-        // tracking toggle, which presents as the mod switching itself off at
-        // random rather than as a config error. ReadHex has no range of its own -
-        // it hands back whatever strtol made of the text, including 0 for a typo
-        // and -1 for an overflowed 0xFFFFFFFF - so the range is checked here.
-        constexpr int kMinVirtualKey = 0x07;
-        constexpr int kMaxVirtualKey = 0xFE;
-
-        int ReadHotkeyChecked(const cameraunlock::IniReader& reader, const char* key, int fallback)
-        {
-            const int raw = reader.ReadHex(kHotkeys, key, fallback);
-            if (raw >= kMinVirtualKey && raw <= kMaxVirtualKey) return raw;
-            Log::Line("WARNING: config [%s] %s = 0x%X is not a bindable virtual-key code in "
-                      "[0x%02X, 0x%02X] - using 0x%X.",
-                      kHotkeys, key, static_cast<unsigned>(raw),
-                      static_cast<unsigned>(kMinVirtualKey), static_cast<unsigned>(kMaxVirtualKey),
-                      static_cast<unsigned>(fallback));
-            return fallback;
-        }
 
         std::string IniPath(const std::string& exeDir)
         {
@@ -169,51 +80,24 @@ namespace kcd_ht
 
     void LoadConfig(const std::string& exeDir, Config& out)
     {
-        const std::string path = IniPath(exeDir);
-
-        cameraunlock::IniReader reader;
-        if (!reader.Open(path))
-        {
-            Log::Line("No %s beside the game exe - using defaults.", kIniName);
-            return;
-        }
-
-        bool portValid = true;
-        const int rawPort = reader.ReadInt(kTracking, "UdpPort", out.udp_port);
-        out.udp_port = cameraunlock::NormalizeUdpPort(rawPort,
-                                                      static_cast<std::uint16_t>(out.udp_port),
-                                                      portValid);
-        if (!portValid)
-            Log::Line("WARNING: config [%s] UdpPort = %d is out of range - using %d.",
-                      kTracking, rawPort, out.udp_port);
-
-        out.enable_on_startup = reader.ReadBool(kTracking, "EnableOnStartup", out.enable_on_startup);
-        out.world_space_yaw = reader.ReadBool(kTracking, "WorldSpaceYaw", out.world_space_yaw);
-
-        out.local_smoothing = ReadFloatChecked(reader, kTracking, "LocalSmoothing",
-                                               out.local_smoothing, 0.0f, 1.0f);
-        out.remote_smoothing = ReadFloatChecked(reader, kTracking, "RemoteSmoothing",
-                                                out.remote_smoothing, 0.0f, 1.0f);
-        out.max_extrapolation_fraction = ReadFloatChecked(reader, kTracking,
-                                                          "MaxExtrapolationFraction",
-                                                          out.max_extrapolation_fraction,
-                                                          0.0f, 1.0f);
-
-        out.field_of_view = ReadFieldOfView(reader, out.field_of_view);
-
-        out.position_enabled = reader.ReadBool(kPosition, "Enabled", out.position_enabled);
-        out.limit_x = ReadPositionLimit(reader, "LimitX", out.limit_x);
-        out.limit_y = ReadPositionLimit(reader, "LimitY", out.limit_y);
-        // Falls back to whatever LimitY resolved to, not to the struct default: a config
-        // that sets only LimitY would otherwise keep 0.20 m of downward travel while the
-        // upward budget moved, and nothing in the log would say the key was half-effective.
-        out.limit_y_down = ReadPositionLimit(reader, "LimitYDown", out.limit_y);
-        out.limit_z = ReadPositionLimit(reader, "LimitZ", out.limit_z);
-        out.limit_z_back = ReadPositionLimit(reader, "LimitZBack", out.limit_z_back);
-
-        out.toggle_key = ReadHotkeyChecked(reader, "ToggleKey", out.toggle_key);
-        out.position_key = ReadHotkeyChecked(reader, "PositionKey", out.position_key);
-        out.yaw_mode_key = ReadHotkeyChecked(reader, "YawModeKey", out.yaw_mode_key);
+        legacy::Config read;
+        legacy::LoadConfig(exeDir, read);
+        out.udp_port = read.udp_port;
+        out.enable_on_startup = read.enable_on_startup;
+        out.world_space_yaw = read.world_space_yaw;
+        out.toggle_key = read.toggle_key;
+        out.position_key = read.position_key;
+        out.yaw_mode_key = read.yaw_mode_key;
+        out.local_smoothing = read.local_smoothing;
+        out.remote_smoothing = read.remote_smoothing;
+        out.max_extrapolation_fraction = read.max_extrapolation_fraction;
+        out.field_of_view = read.field_of_view;
+        out.position_enabled = read.position_enabled;
+        out.limit_x = read.limit_x;
+        out.limit_y = read.limit_y;
+        out.limit_y_down = read.limit_y_down;
+        out.limit_z = read.limit_z;
+        out.limit_z_back = read.limit_z_back;
     }
 
     void WriteDefaultConfigIfMissing(const std::string& exeDir)
