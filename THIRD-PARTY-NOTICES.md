@@ -19,7 +19,7 @@ Kingdom Come: Deliverance.
 | injector | `f7fd18f` (inside Ultimate ASI Loader v9.7.2) | zlib | Compiled into the vendored dinput8.dll |
 | miniz | 3.0.0 (inside Ultimate ASI Loader v9.7.2) | MIT | Compiled into the vendored dinput8.dll |
 | MinHook | v1.3.3 | BSD-2-Clause | Statically linked into `KingdomComeDeliveranceHeadTracking.asi` |
-| cameraunlock-core | ba57f8488cf98be2148f4f6640125c5d1e5fb3ca | MIT | Statically linked into `KingdomComeDeliveranceHeadTracking.asi` |
+| cameraunlock-core | de8d03a06f8184253b61f0836a5e3ce9d9003934 | MIT | Statically linked into `KingdomComeDeliveranceHeadTracking.asi` |
 | OpenTrack | n/a | ISC | Not bundled; UDP protocol interoperability only |
 
 ---
@@ -267,7 +267,7 @@ Git submodule at `cameraunlock-core/`, statically linked into
 `KingdomComeDeliveranceHeadTracking.asi`. Our own code,
 MIT licensed, reproduced here so the notices are complete.
 
-- **Version:** commit `ba57f8488cf98be2148f4f6640125c5d1e5fb3ca`
+- **Version:** commit `de8d03a06f8184253b61f0836a5e3ce9d9003934`
 - **License:** MIT
 - **Upstream:** https://github.com/itsloopyo/cameraunlock-core
 - **Usage:** Shared pose pipeline: OpenTrack receiver, sample-rate
