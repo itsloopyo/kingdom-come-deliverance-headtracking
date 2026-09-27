@@ -2,12 +2,7 @@
 
 ![Kingdom Come: Deliverance running with this mod](https://raw.githubusercontent.com/itsloopyo/kingdom-come-deliverance-headtracking/main/assets/readme-clip.gif)
 
-*Gameplay footage from Kingdom Come: Deliverance, captured with this mod running. The game, its assets and all footage of it are copyright [Warhorse Studios](https://warhorsestudios.cz/); the clip is reproduced here solely to demonstrate what the mod does. This mod is not affiliated with, endorsed by, or supported by Warhorse Studios.*
-
 An unofficial head tracking mod for Kingdom Come: Deliverance that moves the view with your head while your mouse or controller keeps aiming, driven by OpenTrack over UDP, with no VR headset required.
-
-> **Status: pre-release.** This has not been comprehensively tested and may contain
-> game breaking bugs
 
 ## Features
 
@@ -39,8 +34,6 @@ Download [Lopari](https://lopari.app), choose **Kingdom Come: Deliverance**, and
 The mod disables the game's built-in Tobii integration while head tracking is
 enabled, preventing it from adding a second camera movement. Toggling the mod
 off restores the previous Tobii settings. Tobii through OpenTrack keeps working.
-
-[Lopari](https://lopari.app) installs and launches it for you in one click.
 
 If the installer cannot find your game, point it at the folder yourself. Either
 pass the path as an argument:
