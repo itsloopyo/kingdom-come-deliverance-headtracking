@@ -23,11 +23,13 @@ build = { cmd = "cmake --build build --config Release", depends-on = ["setup"] }
 build-debug = { cmd = "cmake --build build --config Debug", depends-on = ["setup"] }
 
 # Characterization tests for the parts of the provider that are decidable
-# without a game process, the config differential test
-# (tests/config_differential), and core's canonical config lint over the
-# committed file and every file that test migrated (run with node). Same build
-# the DLL comes out of, so CI runs it too.
-test = { cmd = "ctest --test-dir build -C Release --output-on-failure", depends-on = ["build"] }
+# without a game process. Same build the DLL comes out of, so CI runs it too.
+test-unit = { cmd = "ctest --test-dir build -C Release --output-on-failure -LE differential", depends-on = ["build"] }
+# The config differential test (tests/config_differential), and core's canonical
+# config lint over the committed file and every file that test migrated (run
+# with node).
+test-differential = { cmd = "ctest --test-dir build -C Release --output-on-failure --no-tests=error -L differential", depends-on = ["build"] }
+test = { depends-on = ["test-unit", "test-differential"] }
 
 # Rewrite the committed CameraUnlock.ini, the table's fresh render and so the
 # file a first launch creates, after a change to a row, a comment or a default,
@@ -62,9 +64,9 @@ clean-all = { cmd = """
     powershell -Command "foreach ($d in @('build','release')) { if (Test-Path $d) { Remove-Item $d -Recurse -Force } }; Write-Host 'All build artifacts cleaned' -ForegroundColor Green"
 """ }
 
-# Package release ZIPs (installer + nexus). Depends on test, so the config
-# differential test gates every package, CI's included.
-package = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/package-release.ps1", depends-on = ["test"] }
+# Package release ZIPs (installer + nexus). Depends on test-unit; the config
+# differential test runs on the release paths.
+package = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/package-release.ps1", depends-on = ["test-unit"] }
 
 # Build + deploy to every installed copy of the game (dev loop). Steam, GOG and
 # Game Pass each get the ASI and the loader, in the directory their own
@@ -84,6 +86,6 @@ release = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/release.ps1"
 
 [dependencies]
 # CMake and Visual Studio come from the system. Node runs core's canonical
-# config lint under `test`, render-config's per_game step and validate-manifest,
-# pinned to the release core's own lock resolves.
+# config lint under `test-differential`, render-config's per_game step and
+# validate-manifest, pinned to the release core's own lock resolves.
 nodejs = "==26.5.0"

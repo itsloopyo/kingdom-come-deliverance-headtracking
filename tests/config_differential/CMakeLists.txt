@@ -48,3 +48,4 @@ add_test(NAME config_lint COMMAND node
     ${CMAKE_CURRENT_SOURCE_DIR}/lint-migrated.mjs
     $<TARGET_FILE_DIR:kcd_config_differential>/migrated)
 set_tests_properties(config_lint PROPERTIES DEPENDS config_differential)
+set_tests_properties(config_differential config_lint PROPERTIES LABELS differential)
